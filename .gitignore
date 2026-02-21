@@ -22,3 +22,43 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# Java
+*.class
+*.log
+hs_err_pid*
+replay_pid*
+
+# IntelliJ / JetBrains
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Eclipse
+.project
+.classpath
+.settings/
+bin/
+
+# VS Code
+.vscode/
+.history/
+
+# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# BlueJ
+*.ctxt
+
+# J2ME
+.mtj.tmp/
+
+# Archives (usually don't commit)
+*.zip
+*.tar.gz
+*.rar
+
