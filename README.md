@@ -1,5 +1,7 @@
+------------------------------------------------------------
 Tic Tac Toe (JavaFX)
 Project 1: Tic Tac Toe
+------------------------------------------------------------
 
 Implement a GUI Tic Tac Toe Game using JavaFX.
 
