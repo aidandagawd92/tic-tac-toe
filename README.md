@@ -7,6 +7,9 @@ Implement a GUI Tic Tac Toe Game using JavaFX.
 
 Goal: any teammate can clone this repo and run the app using the same commands, regardless of IDE (IntelliJ / VS Code / Eclipse).
 
+
+Need to add scenebuilder
+
 ------------------------------------------------------------
 ## DELIVERABLES / REQUIREMENTS
 ------------------------------------------------------------
