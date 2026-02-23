@@ -8,14 +8,14 @@ Implement a GUI Tic Tac Toe Game using JavaFX.
 Goal: any teammate can clone this repo and run the app using the same commands, regardless of IDE (IntelliJ / VS Code / Eclipse).
 
 ------------------------------------------------------------
-DELIVERABLES / REQUIREMENTS
+## DELIVERABLES / REQUIREMENTS
 ------------------------------------------------------------
--[ ] JavaFX GUI board (3x3 buttons)
--[ ] Player name entry before game starts
--[ ] Win + tie detection
--[ ] +100 points per win
--[ ] Top 5 scoreboard display
--[ ] Save/load scoreboard (optional)
+- [ ] JavaFX GUI board (3x3 buttons)
+- [ ] Player name entry before game starts
+- [ ] Win + tie detection
+- [ ] +100 points per win
+- [ ] Top 5 scoreboard display
+- [ ] Save/load scoreboard (optional)
 
 ------------------------------------------------------------
 RUN THE APP (QUICK START)
