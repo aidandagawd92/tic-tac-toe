@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="ui.StartMenuController">
+
+    <top>
+        <Label text="Tic Tac Toe" style="-fx-font-size: 26px; -fx-font-weight: bold;"
+               BorderPane.alignment="CENTER">
+            <BorderPane.margin>
+                <Insets top="15" right="10" bottom="10" left="10"/>
+            </BorderPane.margin>
+        </Label>
+    </top>
+
+    <center>
+        <VBox spacing="12" alignment="CENTER">
+            <Label text="Enter player names to start:" style="-fx-font-size: 14px;"/>
+
+            <HBox spacing="10" alignment="CENTER">
+                <Label text="Player 1 (X):"/>
+                <TextField fx:id="xNameField" promptText="Name for X" prefWidth="180"/>
+            </HBox>
+
+            <HBox spacing="10" alignment="CENTER">
+                <Label text="Player 2 (O):"/>
+                <TextField fx:id="oNameField" promptText="Name for O" prefWidth="180"/>
+            </HBox>
+
+            <HBox spacing="10" alignment="CENTER">
+                <Button text="Start Game" onAction="#onStartGame"/>
+                <Button text="Exit" onAction="#onExit"/>
+            </HBox>
+
+            <Label fx:id="statusLabel" text="" style="-fx-text-fill: red;"/>
+        </VBox>
+    </center>
+
+    <right>
+        <VBox spacing="10">
+            <Label text="Top 5 Leaderboard" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+            <ListView fx:id="top5List" prefWidth="240" prefHeight="220"/>
+            <BorderPane.margin>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </BorderPane.margin>
+        </VBox>
+    </right>
+
+</BorderPane>
