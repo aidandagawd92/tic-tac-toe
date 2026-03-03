@@ -14,7 +14,7 @@ import score.ScoreEntry;
  * Controller for StartMenuView.fxml (the splash/landing page).
  * Responsibilities:
  *  - Read player names from the UI
- *  - Validate name input (required + must be different)
+ *  - Validate name input (names must be different)
  *  - Start the match by calling back into TicTacToeApp
  *  - Display the Top 5 leaderboard on the right panel
  */
@@ -26,7 +26,7 @@ public class StartMenuController {
     @FXML private TextField oNameField;   // Player 2 name input (O)
     @FXML private ListView<String> top5List; // Shows Top 5 leaderboard lines
     @FXML private Label statusLabel;      // Displays validation errors (e.g., missing names)
-
+    //@FXML
     // Reference to the main app so we can call methods like startMatchFromMenu(...)
     private TicTacToeApp app;
 

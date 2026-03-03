@@ -1,5 +1,5 @@
 package ui;
-
+//All imports for javafx we used
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -24,111 +24,138 @@ import javafx.stage.Stage;
 
 import score.Leaderboard;
 import score.ScoreEntry;
-// Main JavaFX app: shows splash screen, runs TicTacToe match, and updates Top-5 leaderboard.
+
+/**
+ * Main JavaFX app.
+ * Focus (requirements + DSA):
+ *  - Requirement #1: players must enter names before playing
+ *  - Requirement #2: win = +100 points
+ *  - Requirement #3: show Top 5 users
+ *
+ * DSA highlight:
+ *  - Leaderboard uses an array of ScoreEntry and maintains ranking using insertion-style shifting
+ *    (the "insert" step of insertion sort) whenever scores change.
+ */
 public class TicTacToeApp extends Application {
 
     // -----------------------------
-    // A) Game board state
+    // A) Game board state (UI + model)
     // -----------------------------
 
-    //button[][] = UI buttons the user clicks (VIEW)
-    //board[][] = game state values used for win/tie checks (model)
-    private Button[][] buttons = new Button[3][3];
-    private int[][] board = new int[3][3];   // 0 empty, 1 X, -1 O
-    private boolean xTurn = true;
+    private final Button[][] buttons = new Button[3][3]; // VIEW: clickable UI cells
+    private final int[][] board = new int[3][3];         // MODEL: X=1, O=-1, empty=0
+    private boolean xTurn = true;                        // whose turn it is (X starts)
 
     // -----------------------------
-    // B) Professor requirements
-    // -----------------------------//gameStarted blocks moves until names are entered (assignment required)
-    private boolean gameStarted = false;
-    private String playerXName = "";
-    private String playerOName = "";
+    // B) Requirements state
+    // -----------------------------
 
-    private int xWins = 0;   // wins for THIS match (current X player)
-    private int oWins = 0;   // wins for THIS match (current O player)
-    //Leaderboard tracks total scores across all users; each win adds 100+ points
-    // Scoreboard across ALL users (Top 5)
-    private final Leaderboard leaderboard = new Leaderboard(100);
-    public Leaderboard getLeaderboard() {
-        return leaderboard;
-    }
+    private boolean gameStarted = false; // gate: blocks moves until names are validated (Req #1)
+    private String playerXName = "";     // used as the "key" in Leaderboard for Player X
+    private String playerOName = "";     // used as the "key" in Leaderboard for Player O
+
+    private int xWins = 0; // wins for this match session only (not total points)
+    private int oWins = 0;
 
     // -----------------------------
-    // C) UI: name inputs + scoreboard list
+    // C) DSA: Leaderboard
     // -----------------------------
-    private final TextField xNameField = new TextField();
+
+    private final Leaderboard leaderboard = new Leaderboard(100); // array-backed leaderboard (DSA)
+    public Leaderboard getLeaderboard() { return leaderboard; }   // used by StartMenuController
+
+    // -----------------------------
+    // D) UI fields shared across scenes
+    // -----------------------------
+
+    private final TextField xNameField = new TextField(); // top bar input (main game scene)
     private final TextField oNameField = new TextField();
 
+    // ListView is driven by an ObservableList so UI updates when the list changes
     private final ObservableList<String> scoreboardLines = FXCollections.observableArrayList();
     private final ListView<String> scoreboardView = new ListView<>(scoreboardLines);
 
-    // Needed for popup ownership
-    private Stage primaryStage;
-    //App launches into splash menu first; board scene is created only after start game.
+    private Stage primaryStage; // needed for scene switching + making popups modal to the main window
+
+    // -----------------------------
+    // App entry: show splash first
+    // -----------------------------
     @Override
     public void start(Stage stage) {
-        this.primaryStage = stage;
+        this.primaryStage = stage;            // store reference so other methods can switch scenes
         stage.setTitle("Tic Tac Toe");
-        showStartMenu();   // loads StarMenuView.fxml and connects its controller to this app instance.
-        stage.show();
+        showStartMenu();                      // start screen first (Req #1: name entry)
+        stage.show();                         // shows whatever scene is currently set on the stage
     }
 
+    // Loads splash screen from FXML and connects controller -> this app instance
     private void showStartMenu() {
         try {
-            // make sure Top 5 list is up to date before showing menu
-            refreshScoreboard();
+            refreshScoreboard(); // ensures Top 5 is current when splash opens (Req #3)
 
+            // FXML loading can fail if the file path is wrong or the FXML has errors
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/StartMenuView.fxml"));
-            Parent root = loader.load();
+            Parent root = loader.load(); // parse FXML + build the UI node tree
 
-            StartMenuController controller = loader.getController();
-            controller.setApp(this); // your StartMenuController must have setApp(TicTacToeApp)
+            StartMenuController controller = loader.getController(); // controller created by FXMLLoader
+            controller.setApp(this); // lets splash controller call back into this app
 
-            primaryStage.setScene(new Scene(root));
+            primaryStage.setScene(new Scene(root)); // swap to splash scene
         } catch (Exception e) {
+            // Why try/catch? FXML loading throws checked exceptions (IO / parse errors).
+            // Printing stack trace is enough for debugging in a class project.
             e.printStackTrace();
         }
     }
 
-    // Called by StartMenuController when user clicks "Start Game"
+    /**
+     * Called by StartMenuController AFTER it validates names.
+     * This bridges Splash -> Game Scene using the same validation logic in startGame().
+     */
     public void startMatchFromMenu(String xName, String oName) {
-        // preload the existing game screen name fields
-        xNameField.setText(xName);
+        xNameField.setText(xName); // copy splash names into main window fields
         oNameField.setText(oName);
 
-        showGameScene();   // switch to the board scene
-        startGame();       // reuse your existing validation + setup logic
-    }
-    //switches Stage to the board + scoreboard scene.
-    private void showGameScene() {
-        Parent gameRoot = buildGameRoot();
-        primaryStage.setScene(new Scene(gameRoot));
+        showGameScene();           // build and show the board + scoreboard scene
+        startGame();               // reuse validation + set gameStarted true + enable board
     }
 
-    //Builds and returns the main game screen (top bar + 3x3 board + Top-5 panel)
+    // Switches the stage to the main game UI
+    private void showGameScene() {
+        Parent gameRoot = buildGameRoot();             // build the main screen layout
+        primaryStage.setScene(new Scene(gameRoot));    // swap scenes on the same stage
+    }
+
+    /**
+     * Builds the main game screen layout:
+     *  - Top bar: name entry + Start Game + Main Menu
+     *  - Center: 3x3 board
+     *  - Right: Top 5 leaderboard panel
+     */
     private Parent buildGameRoot() {
-        GridPane grid = new GridPane(); //GridPane is the 3x3 layout container for the board
-        grid.setHgap(5);
+
+        GridPane grid = new GridPane(); // 3x3 layout container
+        grid.setHgap(5);                // spacing between cells
         grid.setVgap(5);
 
+        // Create 9 buttons and connect each to handleMove(row, col)
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                Button btn = new Button(" ");
-                btn.setMinSize(120, 120);
-                btn.setFont(Font.font(36));
-                //capture row/col for the lambda so each button knows its position
-                final int row = i;
-                final int col = j;
-                //clicking a cell calls handleMove(row, col).
-                btn.setOnAction(e -> handleMove(row, col));
+                Button btn = new Button(" ");      // blank label initially
+                btn.setMinSize(120, 120);          // cell size
+                btn.setFont(Font.font(36));        // large X/O text
 
-                buttons[i][j] = btn;
-                grid.add(btn, j, i);
+                final int row = i;                 // captured for lambda
+                final int col = j;
+
+                btn.setOnAction(e -> handleMove(row, col)); // click -> attempt move
+
+                buttons[i][j] = btn;               // store in VIEW array
+                grid.add(btn, j, i);               // GridPane uses (col, row)
             }
         }
 
-        // board starts disabled until Start Game is pressed, prevents play until Start Game validates names.
-        setBoardEnabled(false);
+        setBoardEnabled(false); // disables clicks until names validated (Req #1)
 
         Label xLabel = new Label("Player 1 (X):");
         Label oLabel = new Label("Player 2 (O):");
@@ -137,24 +164,24 @@ public class TicTacToeApp extends Application {
         oNameField.setPromptText("Enter name for O");
 
         Button startBtn = new Button("Start Game");
-        startBtn.setOnAction(e -> startGame());
-        //Main menu resets match state and returns to splash screen
+        startBtn.setOnAction(e -> startGame()); // validates names + enables board
+
         Button menuBtn = new Button("Main Menu");
         menuBtn.setOnAction(e -> {
-            gameStarted = false;
-            resetBoard();
-            showStartMenu();
+            gameStarted = false;  // re-lock the board until new names are entered
+            resetBoard();         // clear the board before going back
+            showStartMenu();      // return to splash screen
         });
 
         HBox topBar = new HBox(10, xLabel, xNameField, oLabel, oNameField, startBtn, menuBtn);
         topBar.setPadding(new Insets(10));
         topBar.setAlignment(Pos.CENTER_LEFT);
-        //Right panel shows Top 5 users by total score.
+
         Label sbTitle = new Label("Scoreboard (Top 5)");
         sbTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
 
         scoreboardView.setPrefWidth(240);
-        refreshScoreboard();
+        refreshScoreboard(); // UI reads from DSA Leaderboard and formats top 5
 
         VBox rightPane = new VBox(10, sbTitle, scoreboardView);
         rightPane.setPadding(new Insets(10));
@@ -166,15 +193,15 @@ public class TicTacToeApp extends Application {
 
         return root;
     }
+
     // -----------------------------
-    // D) Start Game button logic (Requirement #1)
+    // Requirement #1: Start Game validation
     // -----------------------------
-    //Validates names, sets match players, resets wins, enables board, and clears baord.
     private void startGame() {
-        String x = xNameField.getText().trim();
+        String x = xNameField.getText().trim(); // trim avoids "  Aidan  " being treated differently
         String o = oNameField.getText().trim();
 
-        if (x.isEmpty() || o.isEmpty()) {
+        if (x.isEmpty() || o.isEmpty()) { // names required
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Missing Names");
             alert.setHeaderText("Enter both player names before starting.");
@@ -182,7 +209,7 @@ public class TicTacToeApp extends Application {
             return;
         }
 
-        if (x.equalsIgnoreCase(o)) {
+        if (x.equalsIgnoreCase(o)) { // must be different names (case-insensitive)
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Invalid Names");
             alert.setHeaderText("Names must be different.");
@@ -190,132 +217,133 @@ public class TicTacToeApp extends Application {
             return;
         }
 
-        // Set current match players
-        playerXName = x;
+        playerXName = x; // store names for scoring + popup display
         playerOName = o;
 
-        // Reset match wins (scores stay in leaderboard across users)
-        xWins = 0;
+        xWins = 0; // reset match wins only; total points persist in Leaderboard
         oWins = 0;
 
-        gameStarted = true;
-        setBoardEnabled(true);
-        resetBoard();
+        gameStarted = true;       // unlocks handleMove() processing
+        setBoardEnabled(true);    // enable clicking the board buttons
+        resetBoard();             // start from a clean board state
     }
-    // Enables/disables all 9 board buttons at once.
+
     private void setBoardEnabled(boolean enabled) {
+        // Small UI helper: enable/disable all 9 cells at once
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                buttons[i][j].setDisable(!enabled);
+                buttons[i][j].setDisable(!enabled); // JavaFX uses "disable" (true means not clickable)
             }
         }
     }
 
     // -----------------------------
-    // E) Handle a move (block if game not started)
+    // Gameplay + scoring hooks
     // -----------------------------
-    // Move flow: 1) ignore invalid moves, 2) place X/O, 3) check win/tie, 4) show game over 5) reset board
     private void handleMove(int row, int col) {
-        if (!gameStarted) return;
-        if (board[row][col] != 0) return;
+        if (!gameStarted) return;        // Req #1: ignore clicks until Start Game
+        if (board[row][col] != 0) return; // no overwriting existing moves
 
         if (xTurn) {
-            buttons[row][col].setText("X");
+            buttons[row][col].setText("X");          // update UI
             buttons[row][col].setTextFill(Color.BLUE);
-            board[row][col] = 1;
+            board[row][col] = 1;                     // update MODEL
         } else {
-            buttons[row][col].setText("O");
+            buttons[row][col].setText("O");          // update UI
             buttons[row][col].setTextFill(Color.RED);
-            board[row][col] = -1;
+            board[row][col] = -1;                    // update MODEL
         }
 
-        xTurn = !xTurn;
+        xTurn = !xTurn; // swap turns after a valid move
 
-        int winner = checkWinner();
+        int winner = checkWinner(); // determine if round ended
         if (winner != 0) {
-            showWinner(winner);
-            resetBoard();
+            showWinner(winner);     // Req #2: award points + popup
+            resetBoard();           // prepare for next round
         } else if (isTie()) {
-            showTie();
+            showTie();              // popup for tie
             resetBoard();
         }
     }
 
     // -----------------------------
-    // F) Winner / tie (Requirement #2: win = +100)
+    // Requirement #2: win = +100 points
     // -----------------------------
-    //Winner gets +100 points and Top-5 scoreboard refreshes.
     private void showWinner(int winner) {
-        if (winner == 1) { // X
-            xWins++;
-            leaderboard.addWin(playerXName); // +100 points
-            refreshScoreboard();
-
+        // Winner is 1 for X or -1 for O (based on the board MODEL values)
+        if (winner == 1) {
+            xWins++;                             // match win counter
+            leaderboard.addWin(playerXName);     // +100 points (DSA structure update)
+            refreshScoreboard();                 // Req #3: update Top 5 display
             showGameOverPopup(playerXName + " (X) Wins!");
-        } else { // O
+        } else {
             oWins++;
-            leaderboard.addWin(playerOName); // +100 points
+            leaderboard.addWin(playerOName);     // +100 points
             refreshScoreboard();
-
             showGameOverPopup(playerOName + " (O) Wins!");
         }
     }
 
     private void showTie() {
-        showGameOverPopup("It's a tie!");
+        showGameOverPopup("It's a tie!"); // no points awarded on tie in our rules
     }
 
-    // Pull total score for a name from the leaderboard
     private int getScoreFor(String name) {
+        // DSA note: linear search through the array-backed Leaderboard (O(n))
+        // This is acceptable because n is small (top 5 / classroom project size)
         for (int i = 0; i < leaderboard.size(); i++) {
             ScoreEntry e = leaderboard.get(i);
             if (e.getName().equalsIgnoreCase(name)) return e.getScore();
         }
-        return 0;
+        return 0; // player not found => 0 points
     }
 
     // -----------------------------
-    // G) Popup window (shows player score + wins)
+    // Popup window (shows player score + wins)
     // -----------------------------
-
-    //Loads GameOverView.fxml, passes results into controller, then shows modal window.
     private void showGameOverPopup(String resultText) {
         try {
+            // Try/catch because FXML loading can throw exceptions:
+            // - missing resource path, parse error, controller mismatch, etc.
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/GameOverView.fxml"));
             Parent root = loader.load();
 
             GameOverController controller = loader.getController();
 
+            // Pull totals from Leaderboard (DSA data structure)
             int xScore = getScoreFor(playerXName);
             int oScore = getScoreFor(playerOName);
 
+            // Pass computed values into the popup controller so it can update labels
             controller.setResults(resultText,
                     playerXName, xScore, xWins,
                     playerOName, oScore, oWins);
 
+            // Modal Stage: blocks interaction with main window until popup closes
             Stage popup = new Stage();
             popup.setTitle("Game Over");
             popup.setScene(new Scene(root));
-            popup.initOwner(primaryStage);
-            popup.initModality(Modality.APPLICATION_MODAL);
+            popup.initOwner(primaryStage);                 // ties popup to main window
+            popup.initModality(Modality.APPLICATION_MODAL); // makes popup "modal"
             popup.setResizable(false);
 
-            popup.showAndWait();
+            popup.showAndWait(); // waits here until user clicks Play Again or Exit
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(); // debug output if FXML path/controller is wrong
         }
     }
 
     // -----------------------------
-    // H) Scoreboard Top 5 (Requirement #3)
+    // Requirement #3: Top 5 display
     // -----------------------------
-    //Rebuilds the Top-5 list from the leaderboard's sorted entries.
     private void refreshScoreboard() {
-        scoreboardLines.clear();
+        scoreboardLines.clear(); // clear current UI rows
 
+        // Because Leaderboard stays sorted (DSA insertion-style ranking),
+        // Top 5 is simply the first 5 entries in the array.
         int shown = Math.min(5, leaderboard.size());
         for (int i = 0; i < shown; i++) {
-            ScoreEntry e = leaderboard.get(i);
+            ScoreEntry e = leaderboard.get(i); // already in rank order
             scoreboardLines.add((i + 1) + ") " + e.getName() + " - " + e.getScore());
         }
 
@@ -325,11 +353,11 @@ public class TicTacToeApp extends Application {
     }
 
     // -----------------------------
-    // I) Winner logic + reset (your original)
+    // Winner logic + reset (board mechanics)
     // -----------------------------
-    //Uses sums of rows/cols/diagonals: x=1, O=-1; sum 3=> X wins, -3 => O wins.
     private int checkWinner() {
-        int[] lines = new int[8];
+        // Uses sums of rows/cols/diagonals: X=1, O=-1; sum 3 => X wins, -3 => O wins.
+        int[] lines = new int[8]; // 3 rows + 3 cols + 2 diagonals
 
         for (int i = 0; i < 3; i++) {
             lines[i] = board[i][0] + board[i][1] + board[i][2];
@@ -347,25 +375,27 @@ public class TicTacToeApp extends Application {
         }
         return 0;
     }
-    //Tie occurs when no empty cells remain
+
     private boolean isTie() {
+        // Tie occurs when there are no empty cells left
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
                 if (board[i][j] == 0) return false;
         return true;
     }
-    //Clears board[][] and resets button labels/colors for next round.
+
     private void resetBoard() {
+        // Clear MODEL + UI so the next round starts fresh
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++) {
                 board[i][j] = 0;
                 buttons[i][j].setText(" ");
-                buttons[i][j].setTextFill(Color.BLACK);
+                buttons[i][j].setTextFill(Color.BLACK); // default color reset
             }
-        xTurn = true;
+        xTurn = true; // reset to X starting each new round
     }
 
     public static void main(String[] args) {
-        launch(args);
+        launch(args); // JavaFX entry point
     }
 }
