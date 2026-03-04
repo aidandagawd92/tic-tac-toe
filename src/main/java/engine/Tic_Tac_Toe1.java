@@ -83,5 +83,6 @@ public class Tic_Tac_Toe1 {
         int winningPlayer = game.winner( );
         String[ ] outcome = {"O wins", "Tie", "X wins"}; // rely on ordering
         System.out.println(outcome[1 + winningPlayer]);
+        input.close();
     }
 }

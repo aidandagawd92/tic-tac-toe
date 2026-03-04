@@ -1,0 +1,231 @@
+/* =========================================================
+   GLOBAL (applies to every scene: Start Menu, Game, Popup)
+   ========================================================= */
+
+.root {
+  -fx-font-family: "Segoe UI", "Inter", system-ui, sans-serif;
+  -fx-background-color: #0b0b0b; /* near-black */
+}
+
+.label {
+  -fx-text-fill: rgba(255,255,255,0.92);
+}
+
+.list-view {
+  -fx-background-color: #111;
+  -fx-background-insets: 0;
+  -fx-background-radius: 14;
+  -fx-border-color: rgba(255,255,255,0.10);
+  -fx-border-radius: 14;
+}
+
+.list-view .list-cell {
+  -fx-font-size: 12px;
+  -fx-font-weight: 600;
+  -fx-padding: 4 10;
+  -fx-text-fill: rgba(255,255,255,0.88);
+  -fx-background-color: transparent;
+}
+
+.text-field {
+  -fx-background-color: #111;
+  -fx-text-fill: rgba(255,255,255,0.95);
+  -fx-prompt-text-fill: rgba(255,255,255,0.45);
+  -fx-background-radius: 12;
+  -fx-border-radius: 12;
+  -fx-border-color: rgba(255,255,255,0.12);
+  -fx-padding: 8 10;
+}
+
+/* Reusable button styles (used across screens) */
+.button.btn {
+  -fx-padding: 10 14;
+  -fx-font-size: 13px;
+  -fx-font-weight: 700;
+  -fx-background-radius: 12;
+  -fx-border-radius: 12;
+  -fx-cursor: hand;
+
+  -fx-background-color: transparent;
+  -fx-text-fill: rgba(255,255,255,0.92);
+  -fx-border-color: rgba(255,255,255,0.18);
+  -fx-border-width: 1;
+}
+
+.button.btn:hover {
+  -fx-background-color: rgba(255,255,255,0.04);
+  -fx-border-color: rgba(255,255,255,0.28);
+}
+
+.button.btn:pressed {
+  -fx-translate-y: 1;
+}
+
+.button.btn-primary {
+  -fx-background-color: #1bfb02; 
+  -fx-text-fill: #0b0b0b;       /* near-black text */
+  -fx-border-color: transparent;
+}
+.button.btn-primary:hover {
+  -fx-background-color: #94f691;
+}
+
+/* Start Menu Start button (green) */
+.button.btn-start {
+  -fx-background-color: #2ecc71;
+  -fx-text-fill: #0b0b0b;
+  -fx-border-color: transparent;
+}
+
+.button.btn-start:hover {
+  -fx-background-color: #38d97a;
+}
+
+/* Start Menu Exit button (red) */
+.button.btn-exit {
+  -fx-background-color: #ff2b2b;
+  -fx-text-fill: #0b0b0b;
+  -fx-border-color: transparent;
+}
+
+.button.btn-exit:hover {
+  -fx-background-color: #ff3b3b;
+}
+
+/* =========================================================
+   START MENU SCREEN (FXML)  -  root should have class: start-menu
+   ========================================================= */
+
+.start-menu {
+  -fx-padding: 22;
+  -fx-background-color: #0b0b0b;
+}
+
+/* Optional: if your StartMenuView has a big title Label */
+.start-menu .title {
+  -fx-font-size: 26px;
+  -fx-font-weight: 900;
+  -fx-text-fill: white;
+}
+
+/* Any descriptive text on start screen */
+.start-menu .subtitle {
+  -fx-text-fill: rgba(255,255,255,0.70);
+}
+
+.start-menu .button {
+  -fx-padding: 10 18;
+  -fx-font-size: 14px;
+}
+
+/* =========================================================
+   MAIN GAME SCREEN (code-built)  -  BorderPane root should have class: game
+   ========================================================= */
+
+.game {
+  -fx-padding: 18;
+  -fx-background-color: #0b0b0b;
+}
+
+/* Top bar (HBox) — add topBar.getStyleClass().add("topbar"); if you want this */
+.game .topbar {
+  -fx-padding: 10;
+  -fx-background-color: rgba(255,255,255,0.03);
+  -fx-background-radius: 14;
+  -fx-border-radius: 14;
+  -fx-border-color: rgba(255,255,255,0.10);
+}
+
+/* Scoreboard title label (you can also just leave your inline style) */
+.game .scoreboard-title {
+  -fx-font-size: 16px;
+  -fx-font-weight: 900;
+  -fx-text-fill: white;
+}
+
+/* Board container (GridPane should have class: board) */
+.game .board {
+  -fx-padding: 16;
+  -fx-hgap: 12;
+  -fx-vgap: 12;
+
+  -fx-background-color: #111;
+  -fx-background-radius: 18;
+  -fx-border-radius: 18;
+
+  -fx-border-color: rgba(255,255,255,0.10);
+  -fx-border-width: 1;
+
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 30, 0.25, 0, 10);
+}
+
+/* Cell buttons (each of the 9 buttons should have class: cell) */
+.game .cell {
+  -fx-pref-width: 120;
+  -fx-pref-height: 120;
+
+  -fx-background-color: #0f0f0f;
+  -fx-background-radius: 16;
+  -fx-border-radius: 16;
+
+  -fx-border-color: rgba(255,255,255,0.10);
+  -fx-border-width: 1;
+
+  -fx-font-size: 46px;
+  -fx-font-weight: 900;
+  -fx-text-fill: white;
+
+  -fx-cursor: hand;
+}
+
+.game .cell:hover {
+  -fx-background-color: #151515;
+  -fx-border-color: rgba(255,255,255,0.20);
+}
+
+.game .cell:disabled {
+  -fx-opacity: 0.55;
+}
+
+/* Mark coloring: you add "x" or "o" class in code when setting the move */
+.game .cell.x {
+  -fx-text-fill: #ffffff; /* X = white */
+}
+
+.game .cell.o {
+  -fx-text-fill: #ff2b2b; /* O = red */
+}
+
+/* =========================================================
+   GAME OVER POPUP (FXML)  -  root should have class: gameover
+   ========================================================= */
+
+.gameover {
+  -fx-padding: 18;
+  -fx-background-color: #0b0b0b;
+}
+
+.gameover .result {
+  -fx-font-size: 22px;
+  -fx-font-weight: 900;
+  -fx-text-fill: white;
+}
+
+.gameover .hint {
+  -fx-text-fill: rgba(255,255,255,0.70);
+}
+
+/* If you want a red accent panel in the popup, add class "accent-panel" in FXML */
+.gameover .accent-panel {
+  -fx-background-color: rgba(255,43,43,0.10);
+  -fx-background-radius: 14;
+  -fx-border-radius: 14;
+  -fx-border-color: rgba(255,43,43,0.35);
+}
+
+.list-view .list-cell {
+  -fx-font-size: 14px;
+  -fx-text-fill: #ffffff;
+  -fx-background-color: rgba(255,255,255,0.08);
+}
+

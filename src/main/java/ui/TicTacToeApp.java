@@ -1,5 +1,7 @@
 package ui;
 
+import java.util.Objects;
+
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -21,7 +23,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-
 import score.Leaderboard;
 import score.ScoreEntry;
 
@@ -100,7 +101,11 @@ public class TicTacToeApp extends Application {
             StartMenuController controller = loader.getController(); // controller created by FXMLLoader
             controller.setApp(this); // lets splash controller call back into this app
 
-            primaryStage.setScene(new Scene(root)); // swap to splash scene
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(Objects.requireNonNull(
+                    getClass().getResource("/styles/theme.css")
+            ).toExternalForm());
+            primaryStage.setScene(scene);
         } catch (Exception e) {
             // Why try/catch? FXML loading throws checked exceptions (IO / parse errors).
             // Printing stack trace is enough for debugging in a class project.
@@ -122,10 +127,13 @@ public class TicTacToeApp extends Application {
 
     // Switches the stage to the main game UI
     private void showGameScene() {
-        Parent gameRoot = buildGameRoot();             // build the main screen layout
-        primaryStage.setScene(new Scene(gameRoot));    // swap scenes on the same stage
+        Parent gameRoot = buildGameRoot();
+        Scene scene = new Scene(gameRoot);
+        scene.getStylesheets().add(Objects.requireNonNull(
+                getClass().getResource("/styles/theme.css")
+        ).toExternalForm());
+        primaryStage.setScene(scene);
     }
-
     /**
      * Builds the main game screen layout:
      *  - Top bar: name entry + Start Game + Main Menu
@@ -135,6 +143,7 @@ public class TicTacToeApp extends Application {
     private Parent buildGameRoot() {
 
         GridPane grid = new GridPane(); // 3x3 layout container
+        grid.getStyleClass().add("board");
         grid.setHgap(5);                // spacing between cells
         grid.setVgap(5);
 
@@ -142,6 +151,7 @@ public class TicTacToeApp extends Application {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 Button btn = new Button(" ");      // blank label initially
+                btn.getStyleClass().add("cell");
                 btn.setMinSize(120, 120);          // cell size
                 btn.setFont(Font.font(36));        // large X/O text
 
@@ -164,9 +174,11 @@ public class TicTacToeApp extends Application {
         oNameField.setPromptText("Enter name for O");
 
         Button startBtn = new Button("Start Game");
+        startBtn.getStyleClass().addAll("btn", "btn-primary");
         startBtn.setOnAction(e -> startGame()); // validates names + enables board
 
         Button menuBtn = new Button("Main Menu");
+        menuBtn.getStyleClass().add("btn");
         menuBtn.setOnAction(e -> {
             gameStarted = false;  // re-lock the board until new names are entered
             resetBoard();         // clear the board before going back
@@ -174,19 +186,32 @@ public class TicTacToeApp extends Application {
         });
 
         HBox topBar = new HBox(10, xLabel, xNameField, oLabel, oNameField, startBtn, menuBtn);
+        topBar.getStyleClass().add("topbar");
         topBar.setPadding(new Insets(10));
         topBar.setAlignment(Pos.CENTER_LEFT);
 
         Label sbTitle = new Label("Scoreboard (Top 5)");
-        sbTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        sbTitle.getStyleClass().add("scoreboard-title");
+        //sbTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
 
         scoreboardView.setPrefWidth(240);
+        scoreboardView.getStyleClass().add("scoreboard");
+
+        scoreboardView.setFixedCellSize(50);
+        scoreboardView.setPrefHeight(scoreboardView.getFixedCellSize() * 5 + 2);
+        scoreboardView.setMaxHeight(scoreboardView.getPrefHeight());
+
+        VBox.setVgrow(scoreboardView, javafx.scene.layout.Priority.NEVER);
         refreshScoreboard(); // UI reads from DSA Leaderboard and formats top 5
 
         VBox rightPane = new VBox(10, sbTitle, scoreboardView);
+        rightPane.setPrefWidth(260);
+        rightPane.setMaxWidth(260);
+        rightPane.setAlignment(Pos.TOP_LEFT);
         rightPane.setPadding(new Insets(10));
 
         BorderPane root = new BorderPane();
+        root.getStyleClass().add("game");
         root.setTop(topBar);
         root.setCenter(grid);
         root.setRight(rightPane);
@@ -322,7 +347,13 @@ public class TicTacToeApp extends Application {
             // Modal Stage: blocks interaction with main window until popup closes
             Stage popup = new Stage();
             popup.setTitle("Game Over");
-            popup.setScene(new Scene(root));
+
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(Objects.requireNonNull(
+                    getClass().getResource("/styles/theme.css")
+            ).toExternalForm());
+            popup.setScene(scene);
+            
             popup.initOwner(primaryStage);                 // ties popup to main window
             popup.initModality(Modality.APPLICATION_MODAL); // makes popup "modal"
             popup.setResizable(false);
@@ -394,6 +425,8 @@ public class TicTacToeApp extends Application {
             }
         xTurn = true; // reset to X starting each new round
     }
+
+    
 
     public static void main(String[] args) {
         launch(args); // JavaFX entry point
