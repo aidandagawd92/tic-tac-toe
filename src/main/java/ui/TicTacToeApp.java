@@ -1,7 +1,5 @@
 package ui;
 
-import java.util.Objects;
-
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -19,10 +17,9 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+
 import score.Leaderboard;
 import score.ScoreEntry;
 
@@ -79,6 +76,14 @@ public class TicTacToeApp extends Application {
     private Stage primaryStage; // needed for scene switching + making popups modal to the main window
 
     // -----------------------------
+    // E) CSS helper
+    // -----------------------------
+    private void applyTheme(Scene scene) {
+        // CSS is in: src/main/resources/styles/theme.css
+        scene.getStylesheets().add(getClass().getResource("/styles/theme.css").toExternalForm());
+    }
+
+    // -----------------------------
     // App entry: show splash first
     // -----------------------------
     @Override
@@ -98,14 +103,15 @@ public class TicTacToeApp extends Application {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/StartMenuView.fxml"));
             Parent root = loader.load(); // parse FXML + build the UI node tree
 
+            // Give the FXML root the style class expected by theme.css
+            root.getStyleClass().add("start-menu");
+
             StartMenuController controller = loader.getController(); // controller created by FXMLLoader
             controller.setApp(this); // lets splash controller call back into this app
 
             Scene scene = new Scene(root);
-            scene.getStylesheets().add(Objects.requireNonNull(
-                    getClass().getResource("/styles/theme.css")
-            ).toExternalForm());
-            primaryStage.setScene(scene);
+            applyTheme(scene);
+            primaryStage.setScene(scene); // swap to splash scene
         } catch (Exception e) {
             // Why try/catch? FXML loading throws checked exceptions (IO / parse errors).
             // Printing stack trace is enough for debugging in a class project.
@@ -127,13 +133,13 @@ public class TicTacToeApp extends Application {
 
     // Switches the stage to the main game UI
     private void showGameScene() {
-        Parent gameRoot = buildGameRoot();
+        Parent gameRoot = buildGameRoot(); // build the main screen layout
+
         Scene scene = new Scene(gameRoot);
-        scene.getStylesheets().add(Objects.requireNonNull(
-                getClass().getResource("/styles/theme.css")
-        ).toExternalForm());
-        primaryStage.setScene(scene);
+        applyTheme(scene);
+        primaryStage.setScene(scene);      // swap scenes on the same stage
     }
+
     /**
      * Builds the main game screen layout:
      *  - Top bar: name entry + Start Game + Main Menu
@@ -143,17 +149,20 @@ public class TicTacToeApp extends Application {
     private Parent buildGameRoot() {
 
         GridPane grid = new GridPane(); // 3x3 layout container
-        grid.getStyleClass().add("board");
-        grid.setHgap(5);                // spacing between cells
+        grid.setHgap(5);                // spacing between cells (CSS can override)
         grid.setVgap(5);
+
+        // CSS expects: .game .board
+        grid.getStyleClass().add("board");
 
         // Create 9 buttons and connect each to handleMove(row, col)
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 Button btn = new Button(" ");      // blank label initially
+                btn.setMinSize(120, 120);          // cell size (CSS can override)
+
+                // CSS expects: .game .cell
                 btn.getStyleClass().add("cell");
-                btn.setMinSize(120, 120);          // cell size
-                btn.setFont(Font.font(36));        // large X/O text
 
                 final int row = i;                 // captured for lambda
                 final int col = j;
@@ -174,47 +183,38 @@ public class TicTacToeApp extends Application {
         oNameField.setPromptText("Enter name for O");
 
         Button startBtn = new Button("Start Game");
-        startBtn.getStyleClass().addAll("btn", "btn-primary");
         startBtn.setOnAction(e -> startGame()); // validates names + enables board
+        startBtn.getStyleClass().addAll("btn", "btn-primary");
 
         Button menuBtn = new Button("Main Menu");
-        menuBtn.getStyleClass().add("btn");
         menuBtn.setOnAction(e -> {
             gameStarted = false;  // re-lock the board until new names are entered
             resetBoard();         // clear the board before going back
             showStartMenu();      // return to splash screen
         });
+        menuBtn.getStyleClass().add("btn");
 
         HBox topBar = new HBox(10, xLabel, xNameField, oLabel, oNameField, startBtn, menuBtn);
-        topBar.getStyleClass().add("topbar");
         topBar.setPadding(new Insets(10));
         topBar.setAlignment(Pos.CENTER_LEFT);
+        topBar.getStyleClass().add("topbar"); // CSS expects: .game .topbar
 
         Label sbTitle = new Label("Scoreboard (Top 5)");
-        sbTitle.getStyleClass().add("scoreboard-title");
-        //sbTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        sbTitle.getStyleClass().add("scoreboard-title"); // CSS expects: .game .scoreboard-title
 
         scoreboardView.setPrefWidth(240);
-        scoreboardView.getStyleClass().add("scoreboard");
-
-        scoreboardView.setFixedCellSize(50);
-        scoreboardView.setPrefHeight(scoreboardView.getFixedCellSize() * 5 + 2);
-        scoreboardView.setMaxHeight(scoreboardView.getPrefHeight());
-
-        VBox.setVgrow(scoreboardView, javafx.scene.layout.Priority.NEVER);
         refreshScoreboard(); // UI reads from DSA Leaderboard and formats top 5
 
         VBox rightPane = new VBox(10, sbTitle, scoreboardView);
-        rightPane.setPrefWidth(260);
-        rightPane.setMaxWidth(260);
-        rightPane.setAlignment(Pos.TOP_LEFT);
         rightPane.setPadding(new Insets(10));
 
         BorderPane root = new BorderPane();
-        root.getStyleClass().add("game");
         root.setTop(topBar);
         root.setCenter(grid);
         root.setRight(rightPane);
+
+        // CSS expects the main screen root to have class: game
+        root.getStyleClass().add("game");
 
         return root;
     }
@@ -266,17 +266,22 @@ public class TicTacToeApp extends Application {
     // Gameplay + scoring hooks
     // -----------------------------
     private void handleMove(int row, int col) {
-        if (!gameStarted) return;        // Req #1: ignore clicks until Start Game
+        if (!gameStarted) return;         // Req #1: ignore clicks until Start Game
         if (board[row][col] != 0) return; // no overwriting existing moves
 
+        Button btn = buttons[row][col];
+
+        // Remove any leftover mark classes (safety)
+        btn.getStyleClass().removeAll("x", "o");
+
         if (xTurn) {
-            buttons[row][col].setText("X");          // update UI
-            buttons[row][col].setTextFill(Color.BLUE);
-            board[row][col] = 1;                     // update MODEL
+            btn.setText("X");          // update UI
+            btn.getStyleClass().add("x"); // CSS colors X via .cell.x
+            board[row][col] = 1;       // update MODEL
         } else {
-            buttons[row][col].setText("O");          // update UI
-            buttons[row][col].setTextFill(Color.RED);
-            board[row][col] = -1;                    // update MODEL
+            btn.setText("O");          // update UI
+            btn.getStyleClass().add("o"); // CSS colors O via .cell.o
+            board[row][col] = -1;      // update MODEL
         }
 
         xTurn = !xTurn; // swap turns after a valid move
@@ -333,6 +338,9 @@ public class TicTacToeApp extends Application {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/GameOverView.fxml"));
             Parent root = loader.load();
 
+            // Give the FXML root the style class expected by theme.css
+            root.getStyleClass().add("gameover");
+
             GameOverController controller = loader.getController();
 
             // Pull totals from Leaderboard (DSA data structure)
@@ -349,12 +357,10 @@ public class TicTacToeApp extends Application {
             popup.setTitle("Game Over");
 
             Scene scene = new Scene(root);
-            scene.getStylesheets().add(Objects.requireNonNull(
-                    getClass().getResource("/styles/theme.css")
-            ).toExternalForm());
+            applyTheme(scene);
             popup.setScene(scene);
-            
-            popup.initOwner(primaryStage);                 // ties popup to main window
+
+            popup.initOwner(primaryStage);                  // ties popup to main window
             popup.initModality(Modality.APPLICATION_MODAL); // makes popup "modal"
             popup.setResizable(false);
 
@@ -420,13 +426,15 @@ public class TicTacToeApp extends Application {
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++) {
                 board[i][j] = 0;
-                buttons[i][j].setText(" ");
-                buttons[i][j].setTextFill(Color.BLACK); // default color reset
+
+                Button btn = buttons[i][j];
+                btn.setText(" ");
+
+                // Remove CSS mark classes so colors reset cleanly
+                btn.getStyleClass().removeAll("x", "o");
             }
         xTurn = true; // reset to X starting each new round
     }
-
-    
 
     public static void main(String[] args) {
         launch(args); // JavaFX entry point
